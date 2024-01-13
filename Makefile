@@ -10,7 +10,7 @@ V_SRC = $(wildcard $(SOURCEDIR)/*.v)
 DEBUG ?= 0
 RELEASE ?= 0
 ifeq ($(DEBUG),1)
-	V_FLAGS = -cg -show-c-output
+	V_FLAGS = -cg -show-c-output -trace-calls
 else ifeq ($(RELEASE),1)
 	V_FLAGS = -prod -skip-unused -cflags -fvisibility=hidden
 endif
