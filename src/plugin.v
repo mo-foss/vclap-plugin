@@ -5,9 +5,7 @@ module plugin
 struct MinimalPlugin {
 }
 
-// TODO: Consider mapping to struct's methods?
-fn MinimalPlugin.init(clap_plugin &C.clap_plugin_t) bool {
-    // TODO: Actually init.
+fn (mp MinimalPlugin) init(clap_plugin &C.clap_plugin_t) bool {
     return true
 }
 

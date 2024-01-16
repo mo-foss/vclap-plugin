@@ -50,7 +50,7 @@ fn create_plugin(factory &C.clap_plugin_factory_t, host &C.clap_host_t, plugin_i
 		desc: &_plugin_descriptor
 		// It always carries a pointer to our custom structure.
 		plugin_data: main_plugin
-		init: MinimalPlugin.init
+		init: main_plugin.init
 		destroy: MinimalPlugin.destroy
 		activate: MinimalPlugin.activate
 		deactivate: MinimalPlugin.deactivate
