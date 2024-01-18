@@ -1,5 +1,3 @@
-module plugin
-
 // Features of the CLAP plugin.
 // Have to be defined separately here, otherwise wrong C is generated.
 const _plugin_features = [

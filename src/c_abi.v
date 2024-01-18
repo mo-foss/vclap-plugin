@@ -1,5 +1,3 @@
-module plugin
-
 #flag -I./include
 #include "clap/clap.h"
 
@@ -103,8 +101,7 @@ mut:
 struct C.clap_input_events_t {
 	ctx  voidptr
 	size fn (&C.clap_input_events_t) u32
-	// TODO: How to avoid `voidptr` and use header/event structs instead?
-	get fn (&C.clap_input_events_t, u32) voidptr
+	get fn (&C.clap_input_events_t, u32) &C.clap_event_header_t
 }
 
 @[typedef]
@@ -116,9 +113,9 @@ struct C.clap_event_header_t {
 	flags    u32
 }
 
-// TODO: Why doesn't typedef C structs work here?
-struct ClapEventNote {
-	C.clap_event_header_t
+@[typedef]
+struct C.clap_event_note_t {
+	header C.clap_event_header_t
 	note_id    int
 	port_index i16
 	channel    i16

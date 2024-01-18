@@ -1,4 +1,4 @@
-module plugin
+import log
 
 // This should be the actual implementation of the plugin with
 // all the interesting logic like DSP, UI, etc.
@@ -6,7 +6,7 @@ struct MinimalPlugin {
 	host &C.clap_host_t
 mut:
 	sample_rate f64
-	latency u32
+	latency     u32
 }
 
 // Extract our actual pluging from CLAP plugin wrapper.
@@ -42,9 +42,7 @@ fn MinimalPlugin.reset(clap_plugin &C.clap_plugin_t) {
 	// Cleanup plugin members here.
 }
 
-fn (mp MinimalPlugin) process_event (raw_event voidptr) {
-	header := unsafe { &C.clap_event_header_t(raw_event) }
-
+fn (mp MinimalPlugin) process_event(header &C.clap_event_header_t) {
 	if header.space_id != clap_core_event_space_id {
 		return
 	}
@@ -52,23 +50,23 @@ fn (mp MinimalPlugin) process_event (raw_event voidptr) {
 	match header.@type {
 		u16(ClapEventType.note_on) {
 			// Handle note playing.
-			event := unsafe { &ClapEventNote(raw_event) }
-			println("Note ON: ${event.note_id}")
+			event := &C.clap_event_note_t(header)
+			log.debug('Note ON: ${event.note_id}')
 		}
 		u16(ClapEventType.note_off) {
 			// Handle note stop playing.
-			event := unsafe { &ClapEventNote(raw_event) }
-			println("Note OFF: ${event.note_id}")
+			event := &C.clap_event_note_t(header)
+			log.debug('Note OFF: ${event.note_id}')
 		}
 		// And so on...
 		else {
 			t := unsafe { ClapEventType(header.@type) }
-			println("Unsupported event type: ${t}")
+			log.debug('Unsupported event type: ${t}')
 		}
 	}
 }
 
-fn MinimalPlugin.process(clap_plugin &C.clap_plugin_t, mut process &C.clap_process_t) ClapProcessStatus {
+fn MinimalPlugin.process(clap_plugin &C.clap_plugin_t, mut process C.clap_process_t) ClapProcessStatus {
 	p := from_clap(clap_plugin)
 
 	nframes := process.frames_count
@@ -77,17 +75,16 @@ fn MinimalPlugin.process(clap_plugin &C.clap_plugin_t, mut process &C.clap_proce
 	mut ev_index := u32(0)
 	mut next_ev_frame := if nev > 0 { 0 } else { nframes }
 
-	for i := 0 ; i < nframes ;  {
+	for i := 0; i < nframes; {
 		for ev_index < nev && next_ev_frame == i {
-			event := process.in_events.get(process.in_events, ev_index)
-			header := unsafe { &C.clap_event_header_t(event) }
+			header := process.in_events.get(process.in_events, ev_index)
 
 			if header.time != i {
 				next_ev_frame = header.time
 				break
 			}
 
-			p.process_event(event)
+			p.process_event(header)
 			ev_index++
 
 			if ev_index == nev {
@@ -96,14 +93,18 @@ fn MinimalPlugin.process(clap_plugin &C.clap_plugin_t, mut process &C.clap_proce
 			}
 		}
 
-		for  ; i < next_ev_frame ; i++ {
-			in_l := unsafe { process.audio_inputs[0].data32[0][i] }
-			in_r := unsafe { process.audio_inputs[0].data32[1][i] }
+		for ; i < next_ev_frame; i++ {
+			// In general:
+			// mut inputs := []C.clap_audio_buffer_t{cap: int(process.audio_inputs_count)}
+			// for k := 0; k < process.audio_inputs_count; k++  {
+			// 	inputs << unsafe{ process.audio_inputs[k] }
+			// }
+			input_left := unsafe { process.audio_inputs[0].data32[0][i] }
+			input_right := unsafe { process.audio_inputs[0].data32[1][i] }
+
 			// Swap left and right channels.
-			out_l := in_r
-			out_r := in_l
-			unsafe { process.audio_outputs[0].data32[0][i] = out_l }
-			unsafe { process.audio_outputs[0].data32[1][i] = out_r }
+			unsafe { process.audio_outputs[0].data32[0][i] = input_right }
+			unsafe { process.audio_outputs[0].data32[1][i] = input_left }
 		}
 	}
 
@@ -122,7 +123,6 @@ fn MinimalPlugin.get_extension(clap_plugin &C.clap_plugin_t, id &char) voidptr {
 				}
 			}
 		}
-
 		clap_ext_audio_ports {
 			return &C.clap_plugin_audio_ports_t{
 				count: fn (clap_plugin &C.clap_plugin_t, is_input bool) u32 {
