@@ -13,7 +13,7 @@ const _plugin_descriptor = C.clap_plugin_descriptor_t{
     id: _plugin_id.str
     name: c'CLAP V Hello World'
     vendor: c'MOFOSS'
-    version: c'0.1.0'
+    version: current_version.str
     description: c'MVP of a CLAP plugin in V.'
     // voidptr is to fix warning about const char**.
     features: voidptr(unsafe {
