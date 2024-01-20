@@ -1,6 +1,7 @@
 SOURCEDIR = src
 BUILDDIR = build
 TARGET = $(BUILDDIR)/hello_world.clap
+V_CMD = v -cc gcc -shared -enable-globals
 
 # List all V source files
 V_SRC = $(wildcard $(SOURCEDIR)/*.v)
@@ -10,6 +11,9 @@ V_SRC = $(wildcard $(SOURCEDIR)/*.v)
 DEBUG ?= 0
 RELEASE ?= 0
 ifeq ($(DEBUG),1)
+	V_FLAGS = -cg -show-c-output
+else ifeq ($(DEBUG),2)
+	# Even more debug! Very noisy.
 	V_FLAGS = -cg -show-c-output -trace-calls
 else ifeq ($(RELEASE),1)
 	V_FLAGS = -prod -skip-unused -cflags -fvisibility=hidden
@@ -20,7 +24,7 @@ all: $(TARGET)
 
 # Use dependency on V source files to avoid recompilation
 $(TARGET): $(V_SRC) | dir
-	v -cc gcc -shared -enable-globals $(V_FLAGS) $(SOURCEDIR) -o $@.so
+	$(V_CMD) $(V_FLAGS) $(SOURCEDIR) -o $@.so
 ifeq ($(RELEASE),1)
 	strip $@.so
 endif
@@ -34,6 +38,9 @@ clean:
 
 info: $(TARGET)
 	clap-info $<
+
+genc: $(V_SRC) | dir
+	$(V_CMD) $(V_FLAGS) $(SOURCEDIR) -o $(TARGET).c
 
 install: $(TARGET)
 	mkdir -p ~/.clap
