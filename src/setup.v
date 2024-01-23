@@ -41,16 +41,16 @@ fn create_plugin(factory &C.clap_plugin_factory_t, host &C.clap_host_t, plugin_i
 		desc: &_plugin_descriptor
 		// It always carries a pointer to our custom structure.
 		plugin_data: main_plugin
-		init: MinimalPlugin.init
-		destroy: MinimalPlugin.destroy
-		activate: MinimalPlugin.activate
-		deactivate: MinimalPlugin.deactivate
-		start_processing: MinimalPlugin.start_processing
-		stop_processing: MinimalPlugin.stop_processing
-		reset: MinimalPlugin.reset
-		process: MinimalPlugin.process
-		get_extension: MinimalPlugin.get_extension
-		on_main_thread: MinimalPlugin.on_main_thread
+		init: main_plugin.init
+		destroy: main_plugin.destroy
+		activate: main_plugin.activate
+		deactivate: main_plugin.deactivate
+		start_processing: main_plugin.start_processing
+		stop_processing: main_plugin.stop_processing
+		reset: main_plugin.reset
+		process: main_plugin.process
+		get_extension: main_plugin.get_extension
+		on_main_thread: main_plugin.on_main_thread
 	}
 
 	return clap_plugin
