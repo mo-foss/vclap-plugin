@@ -1,3 +1,5 @@
+module vclap
+
 const clap_ext_latency = unsafe { (&char(C.CLAP_EXT_LATENCY)).vstring() }
 
 @[typedef]
