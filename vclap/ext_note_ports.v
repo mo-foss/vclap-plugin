@@ -1,3 +1,5 @@
+module vclap
+
 const clap_ext_note_ports = unsafe { (&char(C.CLAP_EXT_NOTE_PORTS)).vstring() }
 
 @[typedef]

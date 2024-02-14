@@ -1,26 +1,34 @@
+module vclap
+
+import v.vmod
+
+// Only need to change the mod file to update the version.
+const manifest = vmod.decode(@VMOD_FILE) or { panic(err) }
+const current_version = manifest.version
+const plugin_name = 'CLAP V Hello World'
+
 // Features of the CLAP plugin.
 // Have to be defined separately here, otherwise wrong C is generated.
 const _plugin_features = [
-    c'audio-effect',
-    c'note-effect',
-    c'stereo',
-    unsafe { nil },
+	c'audio-effect',
+	c'note-effect',
+	c'stereo',
+	unsafe { nil },
 ]!
 
 // Plugin information, extracted at load time.
 const _plugin_id = 'example.hello.world'
 const _plugin_descriptor = C.clap_plugin_descriptor_t{
-    id: _plugin_id.str
-    name: c'CLAP V Hello World'
-    vendor: c'MOFOSS'
-    version: current_version.str
-    description: c'MVP of a CLAP plugin in V.'
-    // voidptr is to fix warning about const char**.
-    features: voidptr(unsafe {
-        &&char(&_plugin_features[0])
-    })
+	id: _plugin_id.str
+	name: plugin_name.str
+	vendor: c'MOFOSS'
+	version: current_version.str
+	description: c'MVP of a CLAP plugin in V.'
+	// voidptr is to fix warning about const char**.
+	features: voidptr(unsafe {
+		&&char(&_plugin_features[0])
+	})
 }
-
 
 fn create_plugin(factory &C.clap_plugin_factory_t, host &C.clap_host_t, plugin_id &char) &C.clap_plugin_t {
 	// Sanity checks for lib version and correct plugin expected.
@@ -28,7 +36,7 @@ fn create_plugin(factory &C.clap_plugin_factory_t, host &C.clap_host_t, plugin_i
 		return unsafe { nil }
 	}
 	v_plugin_id := unsafe { cstring_to_vstring(plugin_id) }
-	if v_plugin_id != _plugin_id {
+	if v_plugin_id != vclap._plugin_id {
 		return unsafe { nil }
 	}
 
@@ -38,7 +46,7 @@ fn create_plugin(factory &C.clap_plugin_factory_t, host &C.clap_host_t, plugin_i
 	}
 	// This is the "official" plugin.
 	clap_plugin := &C.clap_plugin_t{
-		desc: &_plugin_descriptor
+		desc: &vclap._plugin_descriptor
 		// It always carries a pointer to our custom structure.
 		plugin_data: main_plugin
 		init: main_plugin.init
@@ -66,7 +74,7 @@ fn entry_get_factory(factory_id &char) voidptr {
 			}
 			get_plugin_descriptor: fn (factory &C.clap_plugin_factory_t, index u32) &C.clap_plugin_descriptor_t {
 				if index == 0 {
-					return &_plugin_descriptor
+					return &vclap._plugin_descriptor
 				} else {
 					return unsafe { nil }
 				}
@@ -79,13 +87,11 @@ fn entry_get_factory(factory_id &char) voidptr {
 	return unsafe { nil }
 }
 
-
-const plugin_entry = C.clap_plugin_entry_t{
+pub const plugin_entry = C.clap_plugin_entry_t{
 	clap_version: C.clap_version_t{}
 	init: fn (plugin_path &char) bool {
 		return true
 	}
 	deinit: fn () {}
-
 	get_factory: entry_get_factory
 }

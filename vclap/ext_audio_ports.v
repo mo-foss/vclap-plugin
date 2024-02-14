@@ -1,3 +1,5 @@
+module vclap
+
 const clap_ext_audio_ports = unsafe { (&char(C.CLAP_EXT_AUDIO_PORTS)).vstring() }
 const clap_port_stereo = unsafe { (&char(C.CLAP_PORT_STEREO)).vstring() }
 const clap_port_mono = unsafe { (&char(C.CLAP_PORT_MONO)).vstring() }

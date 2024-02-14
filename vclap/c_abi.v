@@ -1,4 +1,6 @@
-#flag -I./include
+module vclap
+
+#flag -I @VMODROOT/include
 #include "clap/clap.h"
 
 enum ClapProcessStatus {

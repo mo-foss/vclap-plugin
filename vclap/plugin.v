@@ -1,4 +1,9 @@
-import log
+module vclap
+
+import vclap.gui { GUI }
+
+const gui_width = 640
+const gui_height = 480
 
 // This should be the actual implementation of the plugin with
 // all the interesting logic like DSP, UI, etc.
@@ -6,8 +11,10 @@ import log
 struct MinimalPlugin {
 	host &C.clap_host_t
 mut:
-	sample_rate f64
-	latency     u32
+	sample_rate     f64
+	latency         u32
+	host_posix_fd   &C.clap_host_posix_fd_support_t = unsafe { nil }
+	gui             &gui.GUI = unsafe { nil }
 }
 
 // Extract our actual pluging from CLAP plugin wrapper.
@@ -15,7 +22,8 @@ fn from_clap(clap_plugin &C.clap_plugin_t) &MinimalPlugin {
 	return unsafe { &MinimalPlugin(clap_plugin.plugin_data) }
 }
 
-fn (mp MinimalPlugin) init(clap_plugin &C.clap_plugin_t) bool {
+fn (mut mp MinimalPlugin) init(clap_plugin &C.clap_plugin_t) bool {
+	mp.host_posix_fd = mp.host.get_extension(mp.host, clap_ext_posix_fd_support.str)
 	return true
 }
 
@@ -51,17 +59,17 @@ fn (mp MinimalPlugin) process_event(header &C.clap_event_header_t) {
 		u16(ClapEventType.note_on) {
 			// Handle note playing.
 			event := &C.clap_event_note_t(header)
-			log.debug('Note ON: ${event.note_id}')
+			debug('Note ON: ${event.note_id}')
 		}
 		u16(ClapEventType.note_off) {
 			// Handle note stop playing.
 			event := &C.clap_event_note_t(header)
-			log.debug('Note OFF: ${event.note_id}')
+			debug('Note OFF: ${event.note_id}')
 		}
 		// And so on...
 		else {
 			t := unsafe { ClapEventType(header.@type) }
-			log.debug('Unsupported event type: ${t}')
+			debug('Unsupported event type: ${t}')
 		}
 	}
 }
@@ -119,7 +127,7 @@ fn (mp MinimalPlugin) process(clap_plugin &C.clap_plugin_t, mut process C.clap_p
 	return ClapProcessStatus.@continue
 }
 
-fn (mp MinimalPlugin) get_extension(clap_plugin &C.clap_plugin_t, id &char) voidptr {
+fn (mut mp MinimalPlugin) get_extension(clap_plugin &C.clap_plugin_t, id &char) voidptr {
 	v_id := unsafe { cstring_to_vstring(id) }
 
 	match v_id {
@@ -185,6 +193,100 @@ fn (mp MinimalPlugin) get_extension(clap_plugin &C.clap_plugin_t, id &char) void
 					info.name[port_name.len] = char(0)
 
 					return true
+				}
+			}
+		}
+		clap_ext_gui {
+			return &C.clap_plugin_gui_t{
+				is_api_supported: fn (clap_plugin &C.clap_plugin_t, api &char, is_floating bool) bool {
+					if is_floating {
+						return false
+					}
+					v_api := unsafe { cstring_to_vstring(api) }
+					// Only X11 for now.
+					return v_api == clap_window_api_x11
+				}
+				get_preferred_api: fn (clap_plugin &C.clap_plugin_t, mut api voidptr, mut is_floating &bool) bool {
+					is_floating = false
+					api = unsafe { &clap_window_api_x11 }
+					return true
+				}
+				create: fn [mut mp] (clap_plugin &C.clap_plugin_t, api &char, is_floating bool) bool {
+					v_api := unsafe { cstring_to_vstring(api) }
+					if v_api != clap_window_api_x11 || is_floating {
+						return false
+					}
+					if !isnil(mp.gui) {
+						panic('GUI already initialised!')
+					}
+					mp.gui = GUI.create(vclap.gui_width, vclap.gui_height, plugin_name)
+					// Register the file descriptor we'll receive events from.
+					if !isnil(mp.host_posix_fd) && !isnil(mp.host_posix_fd.register_fd) {
+						mp.host_posix_fd.register_fd(mp.host, mp.gui.fd, ClapPosixFDFlags.read)
+					}
+
+					return true
+				}
+				destroy: fn [mut mp] (clap_plugin &C.clap_plugin_t) {
+					if !isnil(mp.host_posix_fd) && !isnil(mp.host_posix_fd.unregister_fd) {
+						mp.host_posix_fd.unregister_fd(mp.host, mp.gui.fd)
+					}
+					if isnil(mp.gui) {
+						panic('GUI not initialised!')
+					}
+					mp.gui.destroy()
+
+					unsafe {
+						mp.gui = nil
+					}
+				}
+				set_scale: fn (clap_plugin &C.clap_plugin_t, scale f64) bool {
+					return false
+				}
+				get_size: fn (clap_plugin &C.clap_plugin_t, mut width &u32, mut height &u32) bool {
+					width = vclap.gui_width
+					height = vclap.gui_height
+					return true
+				}
+				can_resize: fn (clap_plugin &C.clap_plugin_t) bool {
+					return false
+				}
+				get_resize_hints: fn (clap_plugin &C.clap_plugin_t, hints &C.clap_gui_resize_hints_t) bool {
+					return false
+				}
+				adjust_size: fn (clap_plugin &C.clap_plugin_t, mut width &u32, mut height &u32) bool {
+					width = vclap.gui_width
+					height = vclap.gui_height
+					return true
+				}
+				set_size: fn (clap_plugin &C.clap_plugin_t, width &u32, height &u32) bool {
+					return true
+				}
+				set_parent: fn [mut mp] (clap_plugin &C.clap_plugin_t, window &C.clap_window_t) bool {
+					v_wapi := unsafe { (&char(window.api)).vstring() }
+					assert v_wapi == clap_window_api_x11, 'Bad GUI API'
+
+					mp.gui.set_parent(window.x11)
+					return true
+				}
+				set_transient: fn (clap_plugin &C.clap_plugin_t, window &C.clap_window_t) bool {
+					return false
+				}
+				suggest_title: fn (clap_plugin &C.clap_plugin_t, title &char) {}
+				show: fn [mp] (clap_plugin &C.clap_plugin_t) bool {
+					mp.gui.set_visible(true)
+					return true
+				}
+				hide: fn [mp] (clap_plugin &C.clap_plugin_t) bool {
+					mp.gui.set_visible(false)
+					return true
+				}
+			}
+		}
+		clap_ext_posix_fd_support {
+			return &C.clap_plugin_posix_fd_support_t{
+				on_fd: fn [mp] (clap_plugin &C.clap_plugin_t, fd int, flags ClapPosixFDFlags) {
+					mp.gui.on_posix_fd()
 				}
 			}
 		}
