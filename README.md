@@ -1,10 +1,13 @@
-# vclap
+# CLAP plugin in V
 Demonstration of a [CLAP](https://github.com/free-audio/clap) audio plugin in V.
 
-Currently it does nothing besides being correctly built against official
-CLAP headers and loading into a DAW without any errors.
+Built on top of [clap](https://github.com/odiroot/clap-lib) library for V language.
 
-**Note**: Only tested on Linux.
+Current features:
+
+- Builds a spec-compliant CLAP plugin.
+- Shows a barebones GUI based on XCB/X11 (no controls).
+- Runs under Bitwig Studio on Linux.
 
 ## Quickstart
 
@@ -14,11 +17,15 @@ On top of that you'd need:
 
 - GNU Make
 - GCC
+- `libxcb`
+- `libxmdcp`
+- `libxau`
 
 Start with:
 ```sh
 git clone https://github.com/mo-foss/vclap.git
 cd vclap
+v install
 make
 ```
 

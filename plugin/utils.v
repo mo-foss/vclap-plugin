@@ -1,4 +1,4 @@
-module vclap
+module plugin
 
 @[if debug]
 fn debug(s string) {

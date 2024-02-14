@@ -1,6 +1,8 @@
-module vclap
+module plugin
 
 import v.vmod
+import odiroot.clap
+import odiroot.clap.factory as cfactory
 
 // Only need to change the mod file to update the version.
 const manifest = vmod.decode(@VMOD_FILE) or { panic(err) }
@@ -17,9 +19,9 @@ const _plugin_features = [
 ]!
 
 // Plugin information, extracted at load time.
-const _plugin_id = 'example.hello.world'
-const _plugin_descriptor = C.clap_plugin_descriptor_t{
-	id: _plugin_id.str
+const _id = 'example.hello.world'
+const _descriptor = clap.PluginDescriptor{
+	id: _id.str
 	name: plugin_name.str
 	vendor: c'MOFOSS'
 	version: current_version.str
@@ -30,13 +32,13 @@ const _plugin_descriptor = C.clap_plugin_descriptor_t{
 	})
 }
 
-fn create_plugin(factory &C.clap_plugin_factory_t, host &C.clap_host_t, plugin_id &char) &C.clap_plugin_t {
+fn create_plugin(factory &cfactory.PluginFactory, host &clap.Host, plugin_id &char) &clap.Plugin {
 	// Sanity checks for lib version and correct plugin expected.
-	if !C.clap_version_is_compatible(host.clap_version) {
+	if !clap.version_is_compatible(host.clap_version) {
 		return unsafe { nil }
 	}
 	v_plugin_id := unsafe { cstring_to_vstring(plugin_id) }
-	if v_plugin_id != vclap._plugin_id {
+	if v_plugin_id != _id {
 		return unsafe { nil }
 	}
 
@@ -44,9 +46,10 @@ fn create_plugin(factory &C.clap_plugin_factory_t, host &C.clap_host_t, plugin_i
 	main_plugin := &MinimalPlugin{
 		host: host
 	}
+
 	// This is the "official" plugin.
-	clap_plugin := &C.clap_plugin_t{
-		desc: &vclap._plugin_descriptor
+	clap_plugin := &clap.Plugin{
+		desc: &plugin._descriptor
 		// It always carries a pointer to our custom structure.
 		plugin_data: main_plugin
 		init: main_plugin.init
@@ -66,15 +69,14 @@ fn create_plugin(factory &C.clap_plugin_factory_t, host &C.clap_host_t, plugin_i
 
 fn entry_get_factory(factory_id &char) voidptr {
 	factory_id_v := unsafe { factory_id.vstring() }
-
-	if factory_id_v == clap_plugin_factory_id {
-		factory := C.clap_plugin_factory_t{
-			get_plugin_count: fn (factory &C.clap_plugin_factory_t) u32 {
+	if factory_id_v == cfactory.plugin_factory_id {
+		factory := cfactory.PluginFactory{
+			get_plugin_count: fn (factory &cfactory.PluginFactory) u32 {
 				return 1
 			}
-			get_plugin_descriptor: fn (factory &C.clap_plugin_factory_t, index u32) &C.clap_plugin_descriptor_t {
+			get_plugin_descriptor: fn (factory &cfactory.PluginFactory, index u32) &clap.PluginDescriptor {
 				if index == 0 {
-					return &vclap._plugin_descriptor
+					return &plugin._descriptor
 				} else {
 					return unsafe { nil }
 				}
@@ -87,8 +89,8 @@ fn entry_get_factory(factory_id &char) voidptr {
 	return unsafe { nil }
 }
 
-pub const plugin_entry = C.clap_plugin_entry_t{
-	clap_version: C.clap_version_t{}
+pub const entry = clap.PluginEntry{
+	clap_version: clap.Version{}
 	init: fn (plugin_path &char) bool {
 		return true
 	}
