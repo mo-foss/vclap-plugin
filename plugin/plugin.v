@@ -36,13 +36,14 @@ fn (mp MinimalPlugin) destroy(clap_plugin &clap.Plugin) {
 
 fn delay_attempt_gc(mp &MinimalPlugin) {
 	for {
-		time.sleep(time.second * 30)
+		time.sleep(time.second * 10)
 		mp.host.request_callback(mp.host)
 	}
 }
 
 fn (mut mp MinimalPlugin) activate(clap_plugin &clap.Plugin, sample_rate f64, min_frames_count u32, max_frames_count u32) bool {
 	mp.sample_rate = sample_rate
+	// XXX: MANUAL_GC
 	spawn delay_attempt_gc(mp)
 	return true
 }
@@ -69,18 +70,16 @@ fn (mp MinimalPlugin) process_event(header &clap.EventHeader) {
 	match header.@type {
 		u16(clap.event_note_on) {
 			// Handle note playing.
-			event := unsafe { &clap.EventNote(header) }
-			// debug('Note ON: ${event.note_id}')
+			// event := unsafe { &clap.EventNote(header) }
 		}
 		u16(clap.event_note_off) {
 			// Handle note stop playing.
-			event := unsafe { &clap.EventNote(header) }
-			// debug('Note OFF: ${event.note_id}')
+			// event := unsafe { &clap.EventNote(header) }
 		}
 		// And so on...
 		else {
 			t := unsafe { clap.EventType(header.@type) }
-			// debug('Unsupported event type: ${t}')
+			debug('Unsupported event type: ${t}')
 		}
 	}
 }
@@ -310,14 +309,7 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 }
 
 fn (mp MinimalPlugin) on_main_thread(clap_plugin &clap.Plugin) {
-	eprintln("ENABLING GC.")
-	C.GC_enable()
-	eprintln("COLLECTING GC #1")
-	log_current_memory()
-    C.GC_gcollect()
-	eprintln("COLLECTING GC #2")
-	log_current_memory()
-    C.GC_gcollect()
-    eprintln("DISABLING GC")
-    C.GC_disable()
+	// XXX: MANUAL_GC
+	run_gc_oneshot()
 }
+
