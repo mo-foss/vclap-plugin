@@ -3,6 +3,7 @@ module plugin
 import v.vmod
 import odiroot.clap
 import odiroot.clap.factory as cfactory
+import time
 
 // Only need to change the mod file to update the version.
 const manifest = vmod.decode(@VMOD_FILE) or { panic(err) }
@@ -89,9 +90,23 @@ fn entry_get_factory(factory_id &char) voidptr {
 	return unsafe { nil }
 }
 
+fn mem_logger() {
+	for {
+		mem_use := gc_memory_use() / 1024
+		C.fprintf(C.stderr, c'TOTAL MEMORY: %10d KB\n', mem_use)
+		// eprint("Heap total bytes: ")
+		// heap_use := gc_heap_usage()
+		// eprint(heap_use.total_bytes)
+		// eprint(". Bytes since GC: ")
+		// eprintln(heap_use.bytes_since_gc)
+		time.sleep(time.second * 2)
+	}
+}
+
 pub const entry = clap.PluginEntry{
 	clap_version: clap.Version{}
 	init: fn (plugin_path &char) bool {
+		spawn mem_logger()
 		return true
 	}
 	deinit: fn () {}

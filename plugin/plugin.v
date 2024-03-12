@@ -3,6 +3,7 @@ module plugin
 import odiroot.clap
 import odiroot.clap.ext as cext
 import plugin.gui { GUI }
+import time
 
 const gui_width = 640
 const gui_height = 480
@@ -33,8 +34,16 @@ fn (mp MinimalPlugin) destroy(clap_plugin &clap.Plugin) {
 	// Cleanup plugin members here.
 }
 
+fn delay_attempt_gc(mp &MinimalPlugin) {
+	for {
+		time.sleep(time.second * 30)
+		mp.host.request_callback(mp.host)
+	}
+}
+
 fn (mut mp MinimalPlugin) activate(clap_plugin &clap.Plugin, sample_rate f64, min_frames_count u32, max_frames_count u32) bool {
 	mp.sample_rate = sample_rate
+	spawn delay_attempt_gc(mp)
 	return true
 }
 
@@ -61,22 +70,22 @@ fn (mp MinimalPlugin) process_event(header &clap.EventHeader) {
 		u16(clap.event_note_on) {
 			// Handle note playing.
 			event := unsafe { &clap.EventNote(header) }
-			debug('Note ON: ${event.note_id}')
+			// debug('Note ON: ${event.note_id}')
 		}
 		u16(clap.event_note_off) {
 			// Handle note stop playing.
 			event := unsafe { &clap.EventNote(header) }
-			debug('Note OFF: ${event.note_id}')
+			// debug('Note OFF: ${event.note_id}')
 		}
 		// And so on...
 		else {
 			t := unsafe { clap.EventType(header.@type) }
-			debug('Unsupported event type: ${t}')
+			// debug('Unsupported event type: ${t}')
 		}
 	}
 }
 
-fn (mp MinimalPlugin) process(clap_plugin &clap.Plugin, mut process clap.Process) clap.ProcessStatus {
+fn (mp MinimalPlugin) process(clap_plugin &clap.Plugin, mut process &clap.Process) clap.ProcessStatus {
 	frame_count := process.frames_count
 	event_count := process.in_events.size(process.in_events)
 
@@ -126,6 +135,8 @@ fn (mp MinimalPlugin) process(clap_plugin &clap.Plugin, mut process clap.Process
 		}
 	}
 
+	// XXX
+	unsafe { free(process) }
 	return clap.process_continue
 }
 
@@ -299,4 +310,12 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 }
 
 fn (mp MinimalPlugin) on_main_thread(clap_plugin &clap.Plugin) {
+	eprintln("ENABLING GC.")
+	C.GC_enable()
+	eprintln("COLLECTING GC #1")
+    C.GC_gcollect()
+	eprintln("COLLECTING GC #2")
+    C.GC_gcollect()
+    eprintln("DISABLING GC")
+    C.GC_disable()
 }

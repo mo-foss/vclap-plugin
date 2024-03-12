@@ -4,3 +4,4 @@ module plugin
 fn debug(s string) {
 	eprintln(s)
 }
+
