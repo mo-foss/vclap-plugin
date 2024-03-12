@@ -24,7 +24,7 @@ all: $(TARGET)
 
 # Use dependency on V source files to avoid recompilation
 $(TARGET): $(V_SRC) | dir
-	$(V_CMD) $(V_FLAGS) $(SOURCEDIR) -o $@.so
+	$(V_CMD) -gc boehm_incr $(V_FLAGS) $(SOURCEDIR) -o $@.so
 ifeq ($(RELEASE),1)
 	strip $@.so
 endif
