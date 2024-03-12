@@ -136,7 +136,7 @@ fn (mp MinimalPlugin) process(clap_plugin &clap.Plugin, mut process &clap.Proces
 	}
 
 	// XXX
-	unsafe { free(process) }
+	// unsafe { free(process) }
 	return clap.process_continue
 }
 
@@ -313,8 +313,10 @@ fn (mp MinimalPlugin) on_main_thread(clap_plugin &clap.Plugin) {
 	eprintln("ENABLING GC.")
 	C.GC_enable()
 	eprintln("COLLECTING GC #1")
+	log_current_memory()
     C.GC_gcollect()
 	eprintln("COLLECTING GC #2")
+	log_current_memory()
     C.GC_gcollect()
     eprintln("DISABLING GC")
     C.GC_disable()

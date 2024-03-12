@@ -90,10 +90,16 @@ fn entry_get_factory(factory_id &char) voidptr {
 	return unsafe { nil }
 }
 
+@[inline]
+fn log_current_memory() {
+	mem_use := gc_memory_use() / 1024
+	C.fprintf(C.stderr, c'TOTAL MEMORY: %10d KB\n', mem_use)
+}
+
+
 fn mem_logger() {
 	for {
-		mem_use := gc_memory_use() / 1024
-		C.fprintf(C.stderr, c'TOTAL MEMORY: %10d KB\n', mem_use)
+		log_current_memory()
 		// eprint("Heap total bytes: ")
 		// heap_use := gc_heap_usage()
 		// eprint(heap_use.total_bytes)
