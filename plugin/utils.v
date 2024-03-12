@@ -6,7 +6,6 @@ pub fn debug(s string) {
 	eprintln(s)
 }
 
-@[if debug]
 @[inline]
 fn log_current_memory() {
 	mem_use := gc_memory_use() / 1024
