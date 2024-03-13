@@ -92,6 +92,11 @@ pub fn (g &GUI) on_posix_fd() {
 		}
 		t := event.response_type & ~0x80
 		match t {
+			// Error
+			0 {
+				error_ev := &C.xcb_request_error_t(event)
+				eprintln('Received X11 error: ${error_ev.error_code}')
+			}
 			u8(C.XCB_EXPOSE) {
 				expose_ev := &C.xcb_expose_event_t(event)
 				if expose_ev.window == g.window {

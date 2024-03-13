@@ -50,6 +50,15 @@ struct C.xcb_expose_event_t {
 	window C.xcb_window_t
 }
 
+@[typedef]
+struct C.xcb_request_error_t {
+	error_code u8
+	sequence u16
+	bad_value u32
+	minor_opcode u16
+	major_opcode u16
+}
+
 fn C.xcb_connect(&char, &int) &C.xcb_connection_t
 fn C.xcb_disconnect(&C.xcb_connection_t)
 fn C.xcb_flush(&C.xcb_connection_t)
