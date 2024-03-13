@@ -3,6 +3,7 @@ module plugin
 import odiroot.clap
 import odiroot.clap.ext as cext
 import plugin.gui { GUI }
+import plugin.vgui
 
 const gui_width = 640
 const gui_height = 480
@@ -214,6 +215,7 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 					return true
 				}
 				create: fn [mut mp] (clap_plugin &clap.Plugin, api &char, is_floating bool) bool {
+					vgui.run()
 					v_api := unsafe { cstring_to_vstring(api) }
 					if v_api != cext.window_api_x11 || is_floating {
 						return false
