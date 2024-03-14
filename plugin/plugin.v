@@ -79,7 +79,7 @@ fn (mp MinimalPlugin) process_event(header &clap.EventHeader) {
 		// And so on...
 		else {
 			t := unsafe { clap.EventType(header.@type) }
-			debug('Unsupported event type: ${t}')
+			log('Unsupported event type: ${t}')
 		}
 	}
 }

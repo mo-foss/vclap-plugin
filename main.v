@@ -12,7 +12,7 @@ fn init() {
 	C.GC_disable()
 
 	$if debug {
-		plugin.debug('VCLAP in debug mode')
+		plugin.log('VCLAP in debug mode')
 		spawn plugin.mem_logger()
 	}
 }

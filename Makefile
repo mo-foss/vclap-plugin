@@ -13,7 +13,7 @@ else ifeq ($(DEBUG),2)
 	V_FLAGS = -cg -show-c-output
 else ifeq ($(DEBUG),3)
 	# Even more debug! Very noisy.
-	V_FLAGS = -cg -show-c-output -trace-calls
+	V_FLAGS = -cg -show-c-output -trace-calls -trace-fns *plugin*,*gui*,*GUI*
 else ifeq ($(RELEASE),1)
 	# -prod currently crashes GC.
 	V_FLAGS = -skip-unused -cflags -fvisibility=hidden # -prod

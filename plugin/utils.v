@@ -2,7 +2,7 @@ module plugin
 import time
 
 @[if debug]
-pub fn debug(s string) {
+pub fn log(s string) {
 	eprintln(s)
 }
 
@@ -21,11 +21,11 @@ pub fn mem_logger() {
 }
 
 fn run_gc_oneshot() {
-	debug("ENABLING GC.")
+	log("ENABLING GC.")
 	C.GC_enable()
-	debug("COLLECTING GC.")
+	log("COLLECTING GC.")
 	log_current_memory()
     C.GC_gcollect()
-    debug("DISABLING GC")
+    log("DISABLING GC")
     C.GC_disable()
 }

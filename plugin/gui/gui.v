@@ -64,14 +64,15 @@ pub fn (g &GUI) set_parent(parent u32) {
 }
 
 pub fn (g &GUI) set_visible(visible bool) {
-	if visible {
-		C.xcb_configure_window(g.connection, g.window, C.XCB_CONFIG_WINDOW_STACK_MODE,
-			&[C.XCB_STACK_MODE_ABOVE]!)
-		C.xcb_map_window(g.connection, g.window)
-	} else {
-		C.xcb_unmap_window(g.connection, g.window)
-	}
-	C.xcb_flush(g.connection)
+	// XXX: Doesn't seem to be necessary for embedded window.
+	// if visible {
+	// 	C.xcb_configure_window(g.connection, g.window, C.XCB_CONFIG_WINDOW_STACK_MODE,
+	// 		&[C.XCB_STACK_MODE_ABOVE]!)
+	// 	C.xcb_map_window(g.connection, g.window)
+	// } else {
+	// 	C.xcb_unmap_window(g.connection, g.window)
+	// }
+	// C.xcb_flush(g.connection)
 }
 
 fn (g &GUI) paint() {
