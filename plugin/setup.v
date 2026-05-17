@@ -21,10 +21,10 @@ const _plugin_features = [
 // Plugin information, extracted at load time.
 const _id = 'example.hello.world'
 const _descriptor = clap.PluginDescriptor{
-	id: _id.str
-	name: plugin_name.str
-	vendor: c'MOFOSS'
-	version: current_version.str
+	id:          _id.str
+	name:        plugin_name.str
+	vendor:      c'MOFOSS'
+	version:     current_version.str
 	description: c'MVP of a CLAP plugin in V.'
 	// voidptr is to fix warning about const char**.
 	features: voidptr(unsafe {
@@ -49,19 +49,19 @@ fn create_plugin(factory &cfactory.PluginFactory, host &clap.Host, plugin_id &ch
 
 	// This is the "official" plugin.
 	clap_plugin := &clap.Plugin{
-		desc: &plugin._descriptor
+		desc: &_descriptor
 		// It always carries a pointer to our custom structure.
-		plugin_data: main_plugin
-		init: main_plugin.init
-		destroy: main_plugin.destroy
-		activate: main_plugin.activate
-		deactivate: main_plugin.deactivate
+		plugin_data:      main_plugin
+		init:             main_plugin.init
+		destroy:          main_plugin.destroy
+		activate:         main_plugin.activate
+		deactivate:       main_plugin.deactivate
 		start_processing: main_plugin.start_processing
-		stop_processing: main_plugin.stop_processing
-		reset: main_plugin.reset
-		process: main_plugin.process
-		get_extension: main_plugin.get_extension
-		on_main_thread: main_plugin.on_main_thread
+		stop_processing:  main_plugin.stop_processing
+		reset:            main_plugin.reset
+		process:          main_plugin.process
+		get_extension:    main_plugin.get_extension
+		on_main_thread:   main_plugin.on_main_thread
 	}
 
 	return clap_plugin
@@ -71,17 +71,17 @@ fn entry_get_factory(factory_id &char) voidptr {
 	factory_id_v := unsafe { factory_id.vstring() }
 	if factory_id_v == cfactory.plugin_factory_id {
 		factory := cfactory.PluginFactory{
-			get_plugin_count: fn (factory &cfactory.PluginFactory) u32 {
+			get_plugin_count:      fn (factory &cfactory.PluginFactory) u32 {
 				return 1
 			}
 			get_plugin_descriptor: fn (factory &cfactory.PluginFactory, index u32) &clap.PluginDescriptor {
 				if index == 0 {
-					return &plugin._descriptor
+					return &_descriptor
 				} else {
 					return unsafe { nil }
 				}
 			}
-			create_plugin: create_plugin
+			create_plugin:         create_plugin
 		}
 		return voidptr(&factory)
 	}
@@ -91,9 +91,9 @@ fn entry_get_factory(factory_id &char) voidptr {
 
 pub const entry = clap.PluginEntry{
 	clap_version: clap.Version{}
-	init: fn (plugin_path &char) bool {
+	init:         fn (plugin_path &char) bool {
 		return true
 	}
-	deinit: fn () {}
-	get_factory: entry_get_factory
+	deinit:       fn () {}
+	get_factory:  entry_get_factory
 }

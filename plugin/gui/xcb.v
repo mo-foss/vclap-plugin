@@ -52,9 +52,9 @@ struct C.xcb_expose_event_t {
 
 @[typedef]
 struct C.xcb_request_error_t {
-	error_code u8
-	sequence u16
-	bad_value u32
+	error_code   u8
+	sequence     u16
+	bad_value    u32
 	minor_opcode u16
 	major_opcode u16
 }
@@ -85,4 +85,3 @@ fn C.xcb_poly_rectangle(&C.xcb_connection_t, C.xcb_window_t, C.xcb_gcontext_t, u
 fn C.xcb_poly_fill_rectangle(&C.xcb_connection_t, C.xcb_window_t, C.xcb_gcontext_t, u32, &C.xcb_rectangle_t)
 
 fn C.xcb_poll_for_event(&C.xcb_connection_t) &C.xcb_generic_event_t
-

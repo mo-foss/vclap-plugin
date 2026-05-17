@@ -43,12 +43,12 @@ pub fn GUI.create(width u32, height u32, title string) &GUI {
 	C.xcb_flush(conn)
 
 	return &GUI{
-		width: width
-		height: height
+		width:      width
+		height:     height
 		connection: conn
-		window: window
-		gc: gc
-		fd: C.xcb_get_file_descriptor(conn)
+		window:     window
+		gc:         gc
+		fd:         C.xcb_get_file_descriptor(conn)
 	}
 }
 
