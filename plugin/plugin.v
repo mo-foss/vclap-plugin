@@ -17,7 +17,7 @@ mut:
 	sample_rate   f64
 	latency       u32
 	host_posix_fd &cext.HostPosixFdSupport = unsafe { nil }
-	gui           &gui.GUI = unsafe { nil }
+	gui           &GUI                     = unsafe { nil }
 }
 
 // Extract our actual pluging from CLAP plugin wrapper.
@@ -84,7 +84,7 @@ fn (mp MinimalPlugin) process_event(header &clap.EventHeader) {
 	}
 }
 
-fn (mp MinimalPlugin) process(clap_plugin &clap.Plugin, mut process &clap.Process) clap.ProcessStatus {
+fn (mp MinimalPlugin) process(clap_plugin &clap.Plugin, mut process clap.Process) clap.ProcessStatus {
 	frame_count := process.frames_count
 	event_count := process.in_events.size(process.in_events)
 
@@ -101,7 +101,7 @@ fn (mp MinimalPlugin) process(clap_plugin &clap.Plugin, mut process &clap.Proces
 			header := process.in_events.get(process.in_events, event_index)
 
 			if header.time != i {
-				next_frame = header.time
+				next_frame = int(header.time)
 				break
 			}
 
@@ -110,7 +110,7 @@ fn (mp MinimalPlugin) process(clap_plugin &clap.Plugin, mut process &clap.Proces
 
 			// Event list exhausted.
 			if event_index == event_count {
-				next_frame = frame_count
+				next_frame = int(frame_count)
 				break
 			}
 		}
@@ -155,7 +155,7 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 				count: fn (clap_plugin &clap.Plugin, is_input bool) u32 {
 					return 1
 				}
-				get: fn (clap_plugin &clap.Plugin, index u32, is_input bool, mut info cext.AudioPortInfo) bool {
+				get:   fn (clap_plugin &clap.Plugin, index u32, is_input bool, mut info cext.AudioPortInfo) bool {
 					// Just one port.
 					if index > 0 {
 						return false
@@ -183,7 +183,7 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 				count: fn (clap_plugin &clap.Plugin, is_input bool) u32 {
 					return 1
 				}
-				get: fn (clap_plugin &clap.Plugin, index u32, is_input bool, mut info &cext.NotePortInfo) bool {
+				get:   fn (clap_plugin &clap.Plugin, index u32, is_input bool, mut info cext.NotePortInfo) bool {
 					if index > 0 {
 						return false
 					}
@@ -210,7 +210,7 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 		}
 		cext.ext_gui {
 			return &cext.PluginGUI{
-				is_api_supported: fn (clap_plugin &clap.Plugin, api &char, is_floating bool) bool {
+				is_api_supported:  fn (clap_plugin &clap.Plugin, api &char, is_floating bool) bool {
 					if is_floating {
 						return false
 					}
@@ -223,7 +223,7 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 					api = &cext.window_api_x11.str
 					return true
 				}
-				create: fn [mut mp] (clap_plugin &clap.Plugin, api &char, is_floating bool) bool {
+				create:            fn [mut mp] (clap_plugin &clap.Plugin, api &char, is_floating bool) bool {
 					v_api := unsafe { cstring_to_vstring(api) }
 					if v_api != cext.window_api_x11 || is_floating {
 						return false
@@ -239,7 +239,7 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 
 					return true
 				}
-				destroy: fn [mut mp] (clap_plugin &clap.Plugin) {
+				destroy:           fn [mut mp] (clap_plugin &clap.Plugin) {
 					if !isnil(mp.host_posix_fd) && !isnil(mp.host_posix_fd.unregister_fd) {
 						mp.host_posix_fd.unregister_fd(mp.host, mp.gui.fd)
 					}
@@ -252,44 +252,44 @@ fn (mut mp MinimalPlugin) get_extension(clap_plugin &clap.Plugin, id &char) void
 						mp.gui = nil
 					}
 				}
-				set_scale: fn (clap_plugin &clap.Plugin, scale f64) bool {
+				set_scale:         fn (clap_plugin &clap.Plugin, scale f64) bool {
 					return false
 				}
-				get_size: fn (clap_plugin &clap.Plugin, mut width &u32, mut height &u32) bool {
+				get_size:          fn (clap_plugin &clap.Plugin, mut width &u32, mut height &u32) bool {
 					width = gui_width
 					height = gui_height
 					return true
 				}
-				can_resize: fn (clap_plugin &clap.Plugin) bool {
+				can_resize:        fn (clap_plugin &clap.Plugin) bool {
 					return false
 				}
-				get_resize_hints: fn (clap_plugin &clap.Plugin, hints &cext.GUIResizeHints) bool {
+				get_resize_hints:  fn (clap_plugin &clap.Plugin, hints &cext.GUIResizeHints) bool {
 					return false
 				}
-				adjust_size: fn (clap_plugin &clap.Plugin, mut width &u32, mut height &u32) bool {
+				adjust_size:       fn (clap_plugin &clap.Plugin, mut width &u32, mut height &u32) bool {
 					width = gui_width
 					height = gui_height
 					return true
 				}
-				set_size: fn (clap_plugin &clap.Plugin, width &u32, height &u32) bool {
+				set_size:          fn (clap_plugin &clap.Plugin, width &u32, height &u32) bool {
 					return true
 				}
-				set_parent: fn [mut mp] (clap_plugin &clap.Plugin, window &cext.Window) bool {
+				set_parent:        fn [mut mp] (clap_plugin &clap.Plugin, window &cext.Window) bool {
 					v_wapi := unsafe { (&char(window.api)).vstring() }
 					assert v_wapi == cext.window_api_x11, 'Bad GUI API'
 
 					mp.gui.set_parent(window.x11)
 					return true
 				}
-				set_transient: fn (clap_plugin &clap.Plugin, window &cext.Window) bool {
+				set_transient:     fn (clap_plugin &clap.Plugin, window &cext.Window) bool {
 					return false
 				}
-				suggest_title: fn (clap_plugin &clap.Plugin, title &char) {}
-				show: fn [mp] (clap_plugin &clap.Plugin) bool {
+				suggest_title:     fn (clap_plugin &clap.Plugin, title &char) {}
+				show:              fn [mp] (clap_plugin &clap.Plugin) bool {
 					mp.gui.set_visible(true)
 					return true
 				}
-				hide: fn [mp] (clap_plugin &clap.Plugin) bool {
+				hide:              fn [mp] (clap_plugin &clap.Plugin) bool {
 					mp.gui.set_visible(false)
 					return true
 				}
@@ -312,4 +312,3 @@ fn (mp MinimalPlugin) on_main_thread(clap_plugin &clap.Plugin) {
 	// XXX: MANUAL_GC
 	run_gc_oneshot()
 }
-
