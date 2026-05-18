@@ -1,4 +1,8 @@
+@[has_globals]
+module main
+
 import plugin
+
 // Exposes the plugin to the host (DAW).
 
 @[markused]

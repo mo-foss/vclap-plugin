@@ -1,7 +1,7 @@
 SOURCEDIR = .
 BUILDDIR = build
 TARGET = $(BUILDDIR)/hello_world.clap
-V_CMD = v -cc gcc -shared -enable-globals
+V_CMD = v -cc gcc -shared
 V_SRC := $(shell find $(SOURCEDIR) -name '*.v' -o -name '*.c')
 
 # Debug and Release build options
